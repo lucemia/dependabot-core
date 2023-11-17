@@ -128,7 +128,10 @@ module Dependabot
 
           # If any source is in all_sources, use it
           overlap_source = sources.find { |source| @dependency.all_sources.include?(source["name"]) }
-          urls[:main] = overlap_source["url"] if overlap_source
+          if overlap_source
+            urls[:main] = overlap_source["url"]
+            return urls
+          end
 
           # Create an array of URLs from sources where priority is not "explicit"
           sources = sources.reject { |source| source["priority"] == "explicit" }
