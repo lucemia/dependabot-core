@@ -119,20 +119,20 @@ module Dependabot
             TomlRB.parse(pyproject.content).dig("tool", "poetry", "source") ||
             []
 
-          sources.each do |source|
-            # If source is PyPI, skip it, and let it pick the default URI
-            next if source["name"].casecmp?("PyPI")
+          # If source is PyPI, skip it, and let it pick the default URI
+          sources = sources.select { |source| source["name"].casecmp?("PyPI") }
 
-            if @dependency.all_sources.include?(source["name"])
-              urls[:main] = source["url"]
-            elsif source["default"]
-              # if source is default and urls[:main] is not set, set it
-              urls[:main] ||= source["url"]
-            elsif source["priority"] != "explicit"
-              # if source is not explicit, add it to extra
-              urls[:extra] << source["url"]
-            end
-          end
+          # If any source is default, use it
+          default_source = sources.find { |source| source["default"] }
+          urls[:main] = default_source["url"]
+
+          # If any source is in all_sources, use it
+          overlap_source = sources.find { |source| @dependency.all_sources.include?(source["name"]) }
+          urls[:main] = overlap_source["url"] if overlap_source
+
+          # Create an array of URLs from sources where priority is not "explicit"
+          sources = sources.reject { |source| source["priority"] == "explicit" }
+          urls[:extra] = sources.map { |source| source["url"] }
           urls[:extra] = urls[:extra].uniq
 
           urls
