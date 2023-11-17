@@ -12,15 +12,18 @@ require "dependabot/shared_helpers"
 module Dependabot
   class RegistryClient
     @cached_errors = {}
+    @cached_get_responses = {}
 
     def self.get(url:, headers: {}, options: {})
       raise cached_error_for(url) if cached_error_for(url)
+      return cached_get_response_for(url) if cached_get_response_for(url)
 
-      Excon.get(
+      response = Excon.get(
         url,
         idempotent: true,
         **SharedHelpers.excon_defaults({ headers: headers }.merge(options))
       )
+      cache_get_response(url, response)
     rescue Excon::Error::Timeout => e
       cache_error(url, e)
       raise e
@@ -51,6 +54,14 @@ module Dependabot
     private_class_method def self.cached_error_for(url)
       host = URI(url).host
       @cached_errors.fetch(host, nil)
+    end
+
+    private_class_method def self.cache_get_response(url, response)
+      @cached_get_responses[url] = response
+    end
+
+    private_class_method def self.cached_get_response_for(url)
+      @cached_get_responses.fetch(url, nil)
     end
   end
 end
