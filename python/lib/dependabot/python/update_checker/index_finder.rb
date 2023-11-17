@@ -126,7 +126,8 @@ module Dependabot
             if @dependency.all_sources.include?(source["name"])
               urls[:main] = source["url"]
             elsif source["default"]
-              urls[:main] = source["url"]
+              # if source is default and urls[:main] is not set, set it
+              urls[:main] |= source["url"]
             elsif source["priority"] != "explicit"
               # if source is not explicit, add it to extra
               urls[:extra] << source["url"]
