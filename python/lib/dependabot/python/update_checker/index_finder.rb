@@ -127,7 +127,7 @@ module Dependabot
               urls[:main] = source["url"]
             elsif source["default"]
               # if source is default and urls[:main] is not set, set it
-              urls[:main] |= source["url"]
+              urls[:main] ||= source["url"]
             elsif source["priority"] != "explicit"
               # if source is not explicit, add it to extra
               urls[:extra] << source["url"]
